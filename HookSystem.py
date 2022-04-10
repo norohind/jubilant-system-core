@@ -55,4 +55,8 @@ class HookSystem:
     @staticmethod
     def _notify(operation_id, hooks: list[Hook]) -> None:
         for hook in hooks:
-            threading.Thread(target=hook.update, args=(operation_id,)).start()
+            threading.Thread(
+                name=f'hook-{hook.__class__.__name__}-{operation_id}',
+                target=hook.update,
+                args=(operation_id,)
+            ).start()
