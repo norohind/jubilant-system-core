@@ -1,0 +1,1 @@
+insert into operations_info (squad_id) values (:squad_id) RETURNING operation_id;

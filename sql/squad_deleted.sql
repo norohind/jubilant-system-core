@@ -1,0 +1,1 @@
+select count(*) from squadrons_deleted where squad_id = :squad_id;

@@ -1,0 +1,1 @@
+insert into squadrons_deleted (operation_id, squad_id) VALUES (:operation_id, :squad_id);
