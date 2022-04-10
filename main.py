@@ -1,7 +1,6 @@
 from loguru import logger
 
 import time
-import traceback
 
 import FAPI
 import signal
@@ -22,7 +21,7 @@ def shutdown_callback(sig: int, frame) -> None:
         frame_info = inspect.getframeinfo(frame)
         func = frame_info.function
         code_line = frame_info.code_context[0]
-        logger.info(f'Currently at {func}:{frame_info.lineno}: {code_line!r}\n{traceback.print_tb(frame)}')
+        logger.info(f'Currently at {func}:{frame_info.lineno}: {code_line!r}')
 
     except Exception as e:
         logger.info(f"Can't detect where we are because {e}")
