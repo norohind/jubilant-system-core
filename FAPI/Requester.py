@@ -2,7 +2,7 @@ import os
 import time
 import json
 import requests
-from .BearerManager import bearer_manager
+from .BearerManager import bearer_manager, BearerManagerException
 from loguru import logger
 from . import Exceptions
 
@@ -84,6 +84,10 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
         except requests.exceptions.ConnectionError as e:
             logger.error(f'Proxy {selected_proxy["url"]} is invalid: {str(e.__class__.__name__)}')
             selected_proxy['last_try'] = time.time()  # Anyway set last try to now
+            continue
+
+        except BearerManagerException as e:
+            logger.opt(exception=True).error(f'Error on getting bearer token')
             continue
 
         selected_proxy['last_try'] = time.time()  # Set last try to now
