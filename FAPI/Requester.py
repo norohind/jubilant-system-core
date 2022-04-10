@@ -4,6 +4,8 @@ import json
 import requests
 from .BearerManager import bearer_manager, BearerManagerException
 from loguru import logger
+from dataclasses import dataclass, field
+
 from . import Exceptions
 
 
@@ -16,20 +18,53 @@ BASE_URL = 'https://api.orerve.net/2.0/website/squadron/'
 INFO_ENDPOINT = 'info'
 NEWS_ENDPOINT = 'news/list'
 
-try:
-    PROXIES_DICT: list[dict] = json.load(open('proxies.json', 'r'))
 
-except FileNotFoundError:
-    PROXIES_DICT: list[dict] = [{'url': None, 'last_try': 0}]
+@dataclass
+class Proxy:
+    url: str | None
+    session: requests.sessions.Session = field(init=False)
+    last_try: int = 0
+
+    def __post_init__(self):
+        self.session = requests.sessions.Session()
+        if self.url is not None:
+            self.session.proxies.update({'https': self.url})
 
 
-TIME_BETWEEN_REQUESTS: float = 3.0
-if os.getenv("JUBILANT_TIME_BETWEEN_REQUESTS") is not None:
-    try:
-        TIME_BETWEEN_REQUESTS = float(os.getenv("JUBILANT_TIME_BETWEEN_REQUESTS"))
+class ProxiesManager:
+    PROXIES_DICT: list[Proxy] = list()
+    TIME_BETWEEN_REQUESTS: float = 3.0
 
-    except TypeError:  # env doesn't contain a float
-        pass
+    def __init__(self):
+        try:
+            proxies = json.load(open('proxies.json', 'r'))
+            for proxy in proxies:
+                self.PROXIES_DICT.append(Proxy(url=proxy['url']))
+
+        except FileNotFoundError:
+            self.PROXIES_DICT.append(Proxy(url=None))
+
+        try:
+            self.TIME_BETWEEN_REQUESTS = float(os.getenv("JUBILANT_TIME_BETWEEN_REQUESTS"))
+
+        except TypeError:
+            pass
+
+    def get_proxy(self, do_sleep=True) -> Proxy:
+        selected_proxy = min(self.PROXIES_DICT, key=lambda x: x.last_try)
+        if do_sleep:
+            time_to_sleep: float = (selected_proxy.last_try + self.TIME_BETWEEN_REQUESTS) - time.time()
+
+            if 0 < time_to_sleep <= self.TIME_BETWEEN_REQUESTS:
+                logger.debug(f'Sleeping {time_to_sleep} s')
+                time.sleep(time_to_sleep)
+
+        selected_proxy.last_try = time.time()
+
+        return selected_proxy
+
+
+proxies_manager = ProxiesManager()
 
 
 def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
@@ -39,41 +74,16 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
     :param method: method to use in request
     :param kwargs: kwargs
     :return: requests.Response object
-
-    detect the oldest used proxy
-    if selected proxy is banned, then switch to next
-    detect how many we have to sleep to respect 3 sec timeout for each proxy
-    sleep it
-    perform request with it
-    if request failed -> write last_try for current proxy and try next proxy
     """
 
-    global PROXIES_DICT
-
     while True:
-
-        selected_proxy = min(PROXIES_DICT, key=lambda x: x['last_try'])
-        logger.debug(f'Requesting {method.upper()} {url!r}, kwargs: {kwargs}; Using {selected_proxy["url"]} proxy')
-
-        # let's detect how much we have to wait
-        time_to_sleep: float = (selected_proxy['last_try'] + TIME_BETWEEN_REQUESTS) - time.time()
-
-        if 0 < time_to_sleep <= TIME_BETWEEN_REQUESTS:
-            logger.debug(f'Sleeping {time_to_sleep} s')
-            time.sleep(time_to_sleep)
-
-        proxies: None | dict
-        if selected_proxy['url'] is None:
-            proxies = None
-
-        else:
-            proxies = {'https': selected_proxy['url']}
+        proxy = proxies_manager.get_proxy()
+        logger.debug(f'Requesting {method.upper()} {url!r}, kwargs: {kwargs}; Using {proxy.url} proxy')
 
         try:
-            proxiedFapiRequest: requests.Response = requests.request(
+            proxiedFapiRequest: requests.Response = proxy.session.request(
                 method=method,
                 url=url,
-                proxies=proxies,
                 headers={'Authorization': f'Bearer {bearer_manager.get_random_bearer()}'},
                 **kwargs
             )
@@ -82,15 +92,12 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
                          f'{len(proxiedFapiRequest.content)}')
 
         except requests.exceptions.ConnectionError as e:
-            logger.error(f'Proxy {selected_proxy["url"]} is invalid: {str(e.__class__.__name__)}')
-            selected_proxy['last_try'] = time.time()  # Anyway set last try to now
+            logger.error(f'Proxy {proxy.url} is invalid: {str(e.__class__.__name__)}')
             continue
 
         except BearerManagerException as e:
             logger.opt(exception=True).error(f'Error on getting bearer token')
             continue
-
-        selected_proxy['last_try'] = time.time()  # Set last try to now
 
         if proxiedFapiRequest.status_code == 418:  # FAPI is on maintenance
             logger.warning(f'{method.upper()} {proxiedFapiRequest.url} returned 418, content dump:\n{proxiedFapiRequest.content!r}')
@@ -98,12 +105,11 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
 
         if proxiedFapiRequest.status_code == 504:
             # Rate limited
-            selected_proxy['last_try'] = time.time()  # Anyway set last try to now
-            logger.info(f'Rate limited to {url!r} via {selected_proxy["url"]}')
+            logger.info(f'Rate limited to {url!r} via {proxy.url}')
             continue
 
         elif proxiedFapiRequest.status_code != 200:
-            logger.warning(f"Request to {method.upper()} {url!r} with kwargs: {kwargs}, using {selected_proxy['url']} "
+            logger.warning(f"Request to {method.upper()} {url!r} with kwargs: {kwargs}, using {proxy.url} "
                            f"proxy ends with {proxiedFapiRequest.status_code} status code, content: "
                            f"{proxiedFapiRequest.content}")
 

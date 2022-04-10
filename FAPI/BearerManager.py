@@ -12,6 +12,7 @@ class BearerManager:
 
         self.base_address = base_address
         self.demb_capi_auth = demb_capi_auth
+        self.session = requests.Session()
 
     def get_random_bearer(self) -> str:
         """Gets bearer token from capi.demb.design (companion-api project)
@@ -33,7 +34,7 @@ class BearerManager:
 
     def _request(self, _endpoint: Endpoints) -> requests.Response:
         endpoint = self.base_address + _endpoint.value
-        return requests.get(url=endpoint, headers={'auth': self.demb_capi_auth})
+        return self.session.get(url=endpoint, headers={'auth': self.demb_capi_auth})
 
 
 class BearerManagerException(Exception):
