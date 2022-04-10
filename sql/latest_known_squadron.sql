@@ -1,0 +1,1 @@
+select max(squad_id) as squad_id from squadrons_current_data;

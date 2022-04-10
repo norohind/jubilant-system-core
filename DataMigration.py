@@ -166,6 +166,7 @@ new_db.executescript(QUERIES.NEW.SCHEMA)
 news: dict[int, list[dict]] = defaultdict(list)
 news_cache_timer = time()
 for one_news in old_db.execute(QUERIES.OLD.ALL_NEWS_RECORDS):
+    one_news['inserted_timestamp'] = datetime.strptime(one_news['inserted_timestamp'], '%Y-%m-%d %H:%M:%S')
     news[one_news['squad_id']].append(one_news)
 
 print(f'news cached for {time() - news_cache_timer} s')
@@ -204,14 +205,14 @@ for row in old_db.execute(QUERIES.OLD.ALL_RECORDS):
         high_bound = parsed_timestamp + delta
 
         for one_squad_news in news[squad_id]:
-            if low_bound < datetime.strptime(one_squad_news['inserted_timestamp'], '%Y-%m-%d %H:%M:%S') < high_bound:
+            if low_bound < one_squad_news['inserted_timestamp'] < high_bound:
                 one_squad_news['operation_id'] = operation_id
                 new_db.execute(QUERIES.NEW.INSERT_NEWS, one_squad_news)
                 break
 
-    if iterations_counter % 1000 == 0:
+    if iterations_counter % 100000 == 0:
         new_db.commit()
-        print(f'Iterations: {iterations_counter}; avg iteration time: {(time() - loop_timer)/iterations_counter} s; avg local iter time {(time() - loop_timer_secondary)/1000} s')
+        print(f'Iterations: {iterations_counter}; avg iteration time: {(time() - loop_timer)/iterations_counter} s; avg local iter time {(time() - loop_timer_secondary)/100000} s')
         loop_timer_secondary = time()
 
     iterations_counter += 1

@@ -41,7 +41,6 @@ def get_squad_info(squad_id: int) -> dict | None:
     """
 
     """
-    How it should works? 
     Request squad's info
     
     if squad exists FDEV
@@ -49,12 +48,6 @@ def get_squad_info(squad_id: int) -> dict | None:
     
     if squad doesn't exists FDEV        
        return None
-    """
-    """
-    if DB.db.execute(SQLRequests.squad_deleted, {'squad_id': squad_id}) == 1:
-        # we have it deleted in our DB
-        logger.debug(f'squad {squad_id} is marked as deleted in our DB, returning False')
-        return None
     """
 
     squad_request: requests.Response = request(BASE_URL + INFO_ENDPOINT, params={'squadronId': squad_id})
@@ -65,22 +58,9 @@ def get_squad_info(squad_id: int) -> dict | None:
         squad_request_json['userTags'] = json.dumps(squad_request_json['userTags'])
         squad_request_json = perform_info_mapping(squad_request_json)
 
-        """
-        with DB.db:
-            operation_id = DB.allocate_operation_id(squad_id)
-            squad_request_json['operation_id'] = operation_id
-            DB.db.execute(SQLRequests.insert_info, squad_request_json)
-         """
-
         return squad_request_json
 
     elif squad_request.status_code == 404:  # squad doesn't exists FDEV
-        """
-        if not suppress_absence:
-            with DB.db:
-                operation_id = DB.allocate_operation_id(squad_id)
-                DB.db.execute(SQLRequests.delete_squadron, {'operation_id': operation_id, 'squad_id': squad_id})
-        """
         return None
 
     else:  # any other codes (except 418, that one handles in authed_request), never should happen

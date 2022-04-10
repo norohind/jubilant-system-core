@@ -230,6 +230,8 @@ begin
     new.current_season_aegis_score,
     new.previous_season_aegis_score,
     (select timestamp from operations_info where operations_info.operation_id = new.operation_id)) on conflict do update set
+        updated = (select timestamp from operations_info where operations_info.operation_id = new.operation_id),
+        operation_id = new.operation_id,
         name = new.name,
         tag = new.tag,
         owner_id = new.owner_id,
@@ -299,6 +301,8 @@ begin
      new.operation_id,
      (select timestamp from operations_info where operations_info.operation_id = new.operation_id)
      ) on conflict do update set
+    updated = (select timestamp from operations_info where operations_info.operation_id = new.operation_id),
+    operation_id = new.operation_id,
     motd = new.motd,
     author = new.author,
     cmdr_id = new.cmdr_id,
