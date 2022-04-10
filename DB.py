@@ -1,7 +1,8 @@
 import sqlite3
+import os
 from SQLRequests import SQLRequests
 
-db = sqlite3.connect('jubilant-system.sqlite')
+db = sqlite3.connect(os.environ['DB_PATH'])
 db.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
 db.executescript(SQLRequests.schema)
 
