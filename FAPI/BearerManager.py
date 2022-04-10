@@ -27,13 +27,18 @@ class BearerManager:
         except Exception as e:
             logger.exception(f'Unable to parse capi.demb.design answer\nrequested: {bearer_request.url!r}\n'
                              f'code: {bearer_request.status_code!r}\nresponse: {bearer_request.content!r}', exc_info=e)
-            raise e
+            raise BearerManagerException(e)
 
         return bearer
 
     def _request(self, _endpoint: Endpoints) -> requests.Response:
         endpoint = self.base_address + _endpoint.value
         return requests.get(url=endpoint, headers={'auth': self.demb_capi_auth})
+
+
+class BearerManagerException(Exception):
+    def __init__(self, parent_exception: Exception):
+        self.parent_exception = parent_exception
 
 
 bearer_manager = BearerManager(os.environ['DEMB_CAPI_AUTH'], 'https://capi.demb.design')
