@@ -1,5 +1,8 @@
 from . import Queries
 import DB
+import HookSystem
+
+hook_system = HookSystem.HookSystem()
 
 
 def update_squad(squad_id: int, suppress_absence=False) -> None | int:
@@ -15,10 +18,12 @@ def update_squad(squad_id: int, suppress_absence=False) -> None | int:
         # Squad not found FDEV
         if not suppress_absence:
             operation_id = DB.delete_squadron(squad_id)
+            hook_system.notify_deleted(operation_id)
 
     else:
         # Then we got valid squad_info dict
         news_info = Queries.get_squad_news(squad_id)
         operation_id = DB.insert_info_news(news_info, squad_info)
+        hook_system.notify_inserted(operation_id)
 
     return operation_id
