@@ -1,5 +1,5 @@
 from loguru import logger
-
+import threading
 import time
 
 import FAPI
@@ -43,6 +43,8 @@ def shutdown_callback(sig: int, frame) -> None:
         func = frame_info.function
         code_line = frame_info.code_context[0]
         logger.info(f'Currently at {func}:{frame_info.lineno}: {code_line!r}')
+        running_threads = ', '.join((thread.name for thread in threading.enumerate()))
+        logger.info(f'Running threads: {running_threads}')
 
     except Exception as e:
         logger.info(f"Can't detect where we are because {e}")
