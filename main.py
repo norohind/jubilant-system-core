@@ -9,7 +9,7 @@ import sys
 import inspect
 
 logger.remove()
-logger.add(sys.stderr, level="DEBUG")
+logger.add(sys.stderr, diagnose=False, colorize=False)  # Please set debug level by env variable LOGURU_LEVEL
 
 shutting_down: bool = False
 can_be_shutdown: bool = False
