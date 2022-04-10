@@ -7,12 +7,33 @@ import signal
 import DB
 import sys
 import inspect
+import logging
 
 logger.remove()
 logger.add(sys.stderr, diagnose=False, colorize=False)  # Please set debug level by env variable LOGURU_LEVEL
 
 shutting_down: bool = False
 can_be_shutdown: bool = False
+
+
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        # Get corresponding Loguru level if it exists
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        # Find caller from where originated the logged message
+        frame, depth = logging.currentframe(), 2
+        while frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+
+# logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
 
 def shutdown_callback(sig: int, frame) -> None:
@@ -194,25 +215,29 @@ def main():
 
                 try:
                     amount: int = int(sys.argv[3])
-                    logger.info(f'Entering update amount mode, amount: {amount}')
-                    update(amount_to_update=amount)
-                    exit(0)
 
                 except ValueError:
+                    amount = 0
                     print('Amount must be integer')
                     exit(1)
+
+                logger.info(f'Entering update amount mode, amount: {amount}')
+                update(amount_to_update=amount)
+                exit(0)
 
             elif sys.argv[2] == 'id':
                 # main.py update id <id: int>
                 try:
                     id_for_update: int = int(sys.argv[3])
-                    logger.info(f'Entering update specified squad: {id_for_update} ID')
-                    update(squad_id=id_for_update)
-                    exit(0)
 
                 except ValueError:
+                    id_for_update = 0
                     print('ID must be integer')
                     exit(1)
+
+                logger.info(f'Entering update specified squad: {id_for_update} ID')
+                update(squad_id=id_for_update)
+                exit(0)
 
             else:
                 logger.info(f'Unknown argument {sys.argv[2]}')
