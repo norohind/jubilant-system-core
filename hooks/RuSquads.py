@@ -21,7 +21,7 @@ class DeleteRuSquad(Hook):
 
         if last_record is not None:  # i.e. we have a record in db for this squad
             if 32 in json.loads(last_record['user_tags']):  # 32 - russian tag
-                message = f'Deleted RU squad `{last_record["name"]}`\nplatform: {last_record["platform"]}, members: {last_record["member_count"]}, tag: {last_record["tag"]}, ' \
+                message = f'Deleted RU squad `{last_record["name"]}` [{last_record["tag"]}]\nplatform: {last_record["platform"]}, members: {last_record["member_count"]}, ' \
                       f'created: {last_record["created"]}, owner: `{last_record["owner_name"]}`'
                 HookUtils.notify_discord(message)
 
