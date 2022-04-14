@@ -45,7 +45,7 @@ class HookSystem:
         self.hooks_deleted.remove(hook)
 
     @check_int
-    def notify_inserted(self, operation_id: int | None) -> None:
+    def notify_inserted(self, operation_id: int) -> None:
         self._notify(operation_id, self.hooks_inserted)
 
     @check_int
