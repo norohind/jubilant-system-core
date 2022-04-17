@@ -4,14 +4,19 @@ from HookSystem import HookSystem
 from Hook import Hook
 import HookUtils
 import sqlite3
+from loguru import logger
 
-special_squads_db = sqlite3.connect('file:SPECIAL_SQUADRONS.sqlite?mode=ro', uri=True)
+special_squads_db = sqlite3.connect('file:SPECIAL_SQUADRONS.sqlite?mode=ro', uri=True, check_same_thread=False)
 schema = "create table if not exists special_squadrons (id integer primary key, name text);"
-special_squads_db.executescript(schema)
 
 
 def is_special_squadron(squad_id: int) -> bool:
-    return bool(special_squads_db.execute('select count(*) from special_squadrons where id = ?;', (squad_id,)).fetchone()[0])
+    if bool(special_squads_db.execute('select count(*) from special_squadrons where id = ?;', (squad_id,)).fetchone()[0]):
+        logger.info(f'Special squadron: {squad_id}')
+        return True
+
+    else:
+        return False
 
 
 class DeleteSpecialSquad(Hook):
@@ -45,7 +50,10 @@ class UpdateSpecialSquad(Hook):
             }
         ).fetchall()
 
-        if len(last_records) == 2 and is_special_squadron(last_records[0]['squad_id']):
+        if not is_special_squadron(last_records[0]['squad_id']):
+            return
+
+        if len(last_records) == 2:
             last_records[0]['user_tags'] = json.loads(last_records[0]['user_tags'])
             last_records[1]['user_tags'] = json.loads(last_records[1]['user_tags'])
             latest_record = last_records[0]
@@ -71,12 +79,15 @@ class UpdateSpecialSquad(Hook):
                     HookUtils.generate_message_header(latest_record, 'SPECIAL') + message
                 )
 
-
-
         else:
             HookUtils.notify_discord(f'SPECIAL SQUADRON, {operation_id=}, {len(last_records)=}')
 
 
 def setup(hs: HookSystem):
+    # Since main connection is RO, here we create schema in separate RW connection
+    db = sqlite3.connect('SPECIAL_SQUADRONS.sqlite')
+    db.executescript(schema)
+    db.close()
+
     hs.add_on_delete_hook(DeleteSpecialSquad())
     hs.add_on_insert_hook(UpdateSpecialSquad())
