@@ -92,7 +92,8 @@ def build_squadrons_current_data() -> None:
 
 
 def last_known_squadron() -> int:
-    if (res := db.execute(SQLRequests.last_known_squadron).fetchone()) is None:
+    res = db.execute(SQLRequests.last_known_squadron).fetchone()
+    if res is None or res['squad_id'] is None:
         return 0
 
     else:
