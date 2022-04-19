@@ -7,4 +7,4 @@ select * from
                   except select squad_id from squadrons_deleted
                   )
 order by squad_id desc
-limit :count;
+limit :limit;
