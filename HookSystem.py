@@ -16,6 +16,13 @@ def check_int(func: callable) -> callable:
     return decorated
 
 
+def _last_records(operation_id: int, limit: int) -> list[dict]:
+    return Hook.get_db().execute(
+        HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
+        {'limit': limit, 'operation_id': operation_id}
+    ).fetchall()
+
+
 class HookSystem:
     hooks_inserted: list[Hook] = list()
     hooks_deleted: list[Hook] = list()
@@ -48,27 +55,40 @@ class HookSystem:
 
     @check_int
     def notify_inserted(self, operation_id: int) -> None:
-        last_records = Hook.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {'limit': 2, 'operation_id': operation_id}
-        ).fetchall()
-
-        self._notify(operation_id, self.hooks_inserted, copy.deepcopy(last_records))
+        self._notify(operation_id, self.hooks_inserted, lambda: _last_records(operation_id, 2))
 
     @check_int
     def notify_deleted(self, operation_id: int) -> None:
-        last_records = Hook.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {'limit': 1, 'operation_id': operation_id}
-        ).fetchall()
-
-        self._notify(operation_id, self.hooks_deleted, copy.deepcopy(last_records))
+        self._notify(operation_id, self.hooks_deleted, lambda: _last_records(operation_id, 1))
 
     @staticmethod
-    def _notify(operation_id, hooks: list[Hook], latest: list[dict]) -> None:
+    def _notify(operation_id, hooks: list[Hook], get_latest: callable) -> None:
+        """
+        What here happen?
+        `_notify` calls by `notify_deleted` and `notify_inserted` which supplies callable `get_latest` which allows to get
+        the latest records for appropriate squadron under `operation_id`.
+        We don't want to run logic under `get_latest` in main thread since will slow down performance, instead of it,
+        we call it in separate `bootstrap-hook-thread` thread, which calls then `_call_hooks` with resolved latest records,
+        and thus we avoid:
+        1. Running `get_latest` in main thread
+        2. Running same by functionality logic by every hook (it would just generate meaningless cpu load)
+
+        :param operation_id:
+        :param hooks:
+        :param get_latest:
+        :return:
+        """
+
+        threading.Thread(
+            name=f'bootstrap-hook-thread-{operation_id}',
+            target=lambda: HookSystem._call_hooks(operation_id, hooks, copy.deepcopy(get_latest())),
+        ).start()
+
+    @staticmethod
+    def _call_hooks(operation_id: int, hooks: list[callable], latest_records: list[dict]):
         for hook in hooks:
             threading.Thread(
                 name=f'hook-{hook.__class__.__name__}-{operation_id}',
                 target=hook.update,
-                args=(operation_id, latest)
+                args=(operation_id, latest_records)
             ).start()
