@@ -10,6 +10,8 @@ create table if not exists operations_info (
     squad_id integer
 );
 
+create index if not exists idx_oi_squad_id on operations_info(squad_id);
+
 insert into settings (key, int_value) values ('disable_triggers', 1) on conflict do nothing;
 
 create table if not exists squadrons_news_historical (
