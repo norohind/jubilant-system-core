@@ -87,9 +87,8 @@ def discover(back_count: int = 0):
     if back_count != 0:
         logger.debug(f'back_count = {back_count}')
 
-        squad_id: list
+        squad_id: int
         for squad_id in DB.get_backupdate_squad_ids(back_count):
-            squad_id: int = squad_id[0]
             logger.debug(f'Back updating {squad_id}')
             FAPI.update_squad(squad_id)
 
