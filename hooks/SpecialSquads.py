@@ -6,12 +6,13 @@ import HookUtils
 import sqlite3
 from loguru import logger
 
-special_squads_db = sqlite3.connect('file:SPECIAL_SQUADRONS.sqlite?mode=ro', uri=True, check_same_thread=False)
+special_squads_db = sqlite3.connect('file:SPECIAL_SQUADRONS.sqlite?mode=ro&nolock=1', uri=True, check_same_thread=False)
 schema = "create table if not exists special_squadrons (id integer primary key, name text);"
 
 
 def is_special_squadron(squad_id: int) -> bool:
-    if bool(special_squads_db.execute('select count(*) from special_squadrons where id = ?;', (squad_id,)).fetchone()[0]):
+    if bool(special_squads_db.execute('select count(*) from special_squadrons where id = ?;', (squad_id,)).fetchone()[
+                0]):
         logger.info(f'Special squadron: {squad_id}')
         return True
 
@@ -20,14 +21,8 @@ def is_special_squadron(squad_id: int) -> bool:
 
 
 class DeleteSpecialSquad(Hook):
-    def update(self, operation_id: int) -> None:
-        last_record: dict = self.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {
-                'limit': 1,
-                'operation_id': operation_id
-            }
-        ).fetchone()
+    def update(self, operation_id: int, last_records) -> None:
+        last_record: dict = last_records[0]
 
         if last_record is None:
             return
@@ -36,20 +31,12 @@ class DeleteSpecialSquad(Hook):
             return
 
         message = f'Deleted SPECIAL squad `{last_record["name"]}` [last_record["tag"]]\nplatform: {last_record["platform"]}, members: {last_record["member_count"]}, ' \
-                      f'created: {last_record["created"]}, owner: `{last_record["owner_name"]}`'
+                  f'created: {last_record["created"]}, owner: `{last_record["owner_name"]}`'
         HookUtils.notify_discord(message)
 
 
 class UpdateSpecialSquad(Hook):
-    def update(self, operation_id: int) -> None:
-        last_records: list[dict] = self.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {
-                'limit': 2,
-                'operation_id': operation_id
-            }
-        ).fetchall()
-
+    def update(self, operation_id: int, last_records: list[dict]) -> None:
         if not is_special_squadron(last_records[0]['squad_id']):
             return
 

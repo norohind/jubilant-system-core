@@ -10,14 +10,8 @@ class DeleteRuSquad(Hook):
     Send alert to discord if was removed russian squad
     """
 
-    def update(self, operation_id: int) -> None:
-        last_record: dict = self.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {
-                'limit': 1,
-                'operation_id': operation_id
-            }
-        ).fetchone()
+    def update(self, operation_id: int, last_records) -> None:
+        last_record: dict = last_records[0]
 
         if last_record is not None:  # i.e. we have a record in db for this squad
             if 32 in json.loads(last_record['user_tags']):  # 32 - russian tag
@@ -31,15 +25,7 @@ class UpdateRuSquad(Hook):
     Send alert to discord if something important was changed for ru squad
     """
 
-    def update(self, operation_id: int) -> None:
-        last_records = self.get_db().execute(
-            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-            {
-                'limit': 2,
-                'operation_id': operation_id
-            }
-        ).fetchall()
-
+    def update(self, operation_id: int, last_records: list[dict]) -> None:
         if len(last_records) == 1:
             # Squad just discovered
             record = last_records[0]

@@ -9,7 +9,15 @@ class Hook(ABC):  # See at Hook class as to observer in observer pattern
     """
 
     @abstractmethod
-    def update(self, operation_id: int) -> None:
+    def update(self, operation_id: int, latest: list[dict]) -> None:
+        """
+
+        :param operation_id: operation id
+        :param latest: latest information about squad in operation_id, in case of delete, it 1 last record,
+        in case of update it 2 records for update and 1 record for discovery
+        :return:
+        """
+
         raise NotImplemented
 
     @staticmethod
@@ -23,7 +31,7 @@ class Hook(ABC):  # See at Hook class as to observer in observer pattern
         :return:
         """
 
-        db = sqlite3.connect(f'file:{os.environ["DB_PATH"]}?mode=ro', check_same_thread=False, uri=True)
+        db = sqlite3.connect(f'file:{os.environ["DB_PATH"]}?mode=ro&nolock=1', check_same_thread=False, uri=True)
         db.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
 
         return db

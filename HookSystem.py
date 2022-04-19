@@ -3,6 +3,8 @@ import functools
 import threading
 from Hook import Hook
 import importlib.machinery
+import HookUtils
+import copy
 
 
 def check_int(func: callable) -> callable:
@@ -46,17 +48,27 @@ class HookSystem:
 
     @check_int
     def notify_inserted(self, operation_id: int) -> None:
-        self._notify(operation_id, self.hooks_inserted)
+        last_records = Hook.get_db().execute(
+            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
+            {'limit': 2, 'operation_id': operation_id}
+        ).fetchall()
+
+        self._notify(operation_id, self.hooks_inserted, copy.deepcopy(last_records))
 
     @check_int
     def notify_deleted(self, operation_id: int) -> None:
-        self._notify(operation_id, self.hooks_deleted)
+        last_records = Hook.get_db().execute(
+            HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
+            {'limit': 1, 'operation_id': operation_id}
+        ).fetchall()
+
+        self._notify(operation_id, self.hooks_deleted, copy.deepcopy(last_records))
 
     @staticmethod
-    def _notify(operation_id, hooks: list[Hook]) -> None:
+    def _notify(operation_id, hooks: list[Hook], latest: list[dict]) -> None:
         for hook in hooks:
             threading.Thread(
                 name=f'hook-{hook.__class__.__name__}-{operation_id}',
                 target=hook.update,
-                args=(operation_id,)
+                args=(operation_id, latest)
             ).start()
