@@ -5,6 +5,8 @@ from Hook import Hook
 import importlib.machinery
 import HookUtils
 import copy
+from loguru import logger
+import threading
 
 
 def check_int(func: callable) -> callable:
@@ -17,10 +19,21 @@ def check_int(func: callable) -> callable:
 
 
 def _last_records(operation_id: int, limit: int) -> list[dict]:
-    return Hook.get_db().execute(
-        HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
-        {'limit': limit, 'operation_id': operation_id}
-    ).fetchall()
+    last_exception: Exception | None = None
+
+    for retry in range(0, 3):
+        try:
+            return Hook.get_db().execute(
+                HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
+                {'limit': limit, 'operation_id': operation_id}
+            ).fetchall()
+
+        except Exception as e:
+            logger.opt(exception=True).warning(f'Exception in {threading.current_thread().name}, retry: {retry}')
+            last_exception = e
+            continue
+
+    raise last_exception
 
 
 class HookSystem:
