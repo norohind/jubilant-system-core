@@ -30,7 +30,7 @@ class UpdateRuSquad(Hook):
             # Squad just discovered
             last_records[0]['user_tags'] = json.loads(last_records[0]['user_tags'])
             record = last_records[0]
-            if '32' in record['user_tags']:
+            if 32 in record['user_tags']:
                 message = f"""
 name: `{record['name']}` [{record['tag']}]
 members: {record['member_count']}
