@@ -28,6 +28,7 @@ class UpdateRuSquad(Hook):
     def update(self, operation_id: int, last_records: list[dict]) -> None:
         if len(last_records) == 1:
             # Squad just discovered
+            last_records[0]['user_tags'] = json.loads(last_records[0]['user_tags'])
             record = last_records[0]
             if '32' in record['user_tags']:
                 message = f"""
