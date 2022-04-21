@@ -1,6 +1,5 @@
 import os
 import functools
-import threading
 from Hook import Hook
 import importlib.machinery
 import HookUtils
