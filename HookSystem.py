@@ -93,7 +93,7 @@ class HookSystem:
 
         threading.Thread(
             name=f'bootstrap-hook-thread-{operation_id}',
-            target=lambda: HookSystem._call_hooks(operation_id, hooks, copy.deepcopy(get_latest())),
+            target=lambda: HookSystem._call_hooks(operation_id, hooks, get_latest()),
         ).start()
 
     @staticmethod
@@ -102,5 +102,5 @@ class HookSystem:
             threading.Thread(
                 name=f'hook-{hook.__class__.__name__}-{operation_id}',
                 target=hook.update,
-                args=(operation_id, latest_records)
+                args=(operation_id, copy.deepcopy(latest_records))
             ).start()
