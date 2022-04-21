@@ -57,6 +57,11 @@ def shutdown_callback(sig: int, frame) -> None:
         exit(0)
 
 
+def threads_dump(sig: int, frame) -> None:
+    running_threads = ', '.join((thread.name for thread in threading.enumerate()))
+    logger.info(f'Running threads: {running_threads}')
+
+
 def discover(back_count: int = 0):
     """Discover new squads
     :param back_count: int how many squads back we should check, it is helpful to recheck newly created squads
@@ -153,6 +158,7 @@ def main():
     global can_be_shutdown
     signal.signal(signal.SIGTERM, shutdown_callback)
     signal.signal(signal.SIGINT, shutdown_callback)
+    signal.signal(signal.SIGUSR1, threads_dump)
 
     def help_cli() -> str:
         return """Possible arguments:
