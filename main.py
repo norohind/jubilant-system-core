@@ -158,7 +158,11 @@ def main():
     global can_be_shutdown
     signal.signal(signal.SIGTERM, shutdown_callback)
     signal.signal(signal.SIGINT, shutdown_callback)
-    signal.signal(signal.SIGUSR1, threads_dump)
+    try:
+        signal.signal(signal.SIGUSR1, threads_dump)
+
+    except AttributeError:
+        pass
 
     def help_cli() -> str:
         return """Possible arguments:
