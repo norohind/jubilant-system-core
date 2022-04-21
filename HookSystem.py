@@ -1,5 +1,7 @@
 import os
 import functools
+import sqlite3
+
 from Hook import Hook
 import importlib.machinery
 import HookUtils
@@ -26,6 +28,13 @@ def _last_records(operation_id: int, limit: int) -> list[dict]:
                 HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
                 {'limit': limit, 'operation_id': operation_id}
             ).fetchall()
+
+        except sqlite3.DatabaseError as e:
+            if retry != 0:
+                logger.opt(exception=True).warning(f'Exception in {threading.current_thread().name}, retry: {retry}')
+
+            last_exception = e
+            continue
 
         except Exception as e:
             logger.opt(exception=True).warning(f'Exception in {threading.current_thread().name}, retry: {retry}')
