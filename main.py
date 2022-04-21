@@ -166,7 +166,8 @@ def main():
     main.py update
     main.py update amount <amount: int>
     main.py update id <id: int>
-    main.py daemon"""
+    main.py daemon
+    main.py hooks notify <inserted;deleted> <operation_id: int>"""
 
     logger.debug(f'argv: {sys.argv}')
 
@@ -249,6 +250,26 @@ def main():
             else:
                 logger.info(f'Unknown argument {sys.argv[2]}')
 
+    elif len(sys.argv) == 5:
+        # main.py hooks notify <inserted;deleted> <operation_id: int>
+        if sys.argv[1] == 'hooks' and sys.argv[2] == 'notify' and sys.argv[3] in ('inserted', 'deleted'):
+            try:
+                operation_id = int(sys.argv[4])
+
+            except ValueError:
+                operation_id = 0
+                print('operation_id must be integer')
+                exit(1)
+
+            logger.info(f'Notifying {sys.argv[3]} hooks with {operation_id=}')
+
+            if sys.argv[3] == 'inserted':
+                FAPI.hook_system.notify_inserted(operation_id)
+
+            else:  # deleted
+                FAPI.hook_system.notify_deleted(operation_id)
+
+            exit(0)
     else:
         print(help_cli())
         exit(1)
