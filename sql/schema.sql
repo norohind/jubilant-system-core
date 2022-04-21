@@ -312,3 +312,5 @@ begin
     news_id = new.news_id,
     "date" = new.date;
 end;
+
+create index if not exists idx_snh_operation_id_desc on squadrons_news_historical (operation_id desc);
