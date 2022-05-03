@@ -42,7 +42,7 @@ def _last_records(operation_id: int, limit: int) -> list[dict]:
             continue
 
     with open('retries_list.txt', mode='a') as retries_file:
-        retries_file.write(f'{operation_id}\n')
+        retries_file.write(f'{operation_id}:{limit} \n')
 
     raise last_exception
 
