@@ -126,9 +126,10 @@ def discover(back_count: int = 0):
             tries = tries + 1
 
 
-def update(squad_id: int = None, amount_to_update: int = 1):
+def update(squad_id: int = None, amount_to_update: int = 1, suppress_absence=True):
     """
 
+    :param suppress_absence: if we're manually updating a squadron which we know for sure are deleted
     :param squad_id: update specified squad, updates only that squad
     :param amount_to_update: update specified amount, ignores when squad_id specified
     :return:
@@ -136,7 +137,7 @@ def update(squad_id: int = None, amount_to_update: int = 1):
 
     if isinstance(squad_id, int):
         logger.debug(f'Going to update one specified squadron: {squad_id} ID')
-        FAPI.update_squad(squad_id, suppress_absence=True)
+        FAPI.update_squad(squad_id, suppress_absence=suppress_absence)
         # suppress_absence is required because if we're manually updating squad with some high id it may just don't exist yet
         return
 
@@ -170,6 +171,7 @@ def main():
     main.py update
     main.py update amount <amount: int>
     main.py update id <id: int>
+    main.py force-update id <id: int>
     main.py daemon
     main.py hooks notify <inserted;deleted> <operation_id: int>"""
 
@@ -221,8 +223,8 @@ def main():
             exit(1)
 
     elif len(sys.argv) == 4:
-        if sys.argv[1] == 'update':
-            if sys.argv[2] == 'amount':
+        if sys.argv[1] in ('update', 'force-update'):
+            if sys.argv[2] == 'amount' and sys.argv[1] == 'update':
                 # main.py update amount <amount: int>
 
                 try:
@@ -239,6 +241,13 @@ def main():
 
             elif sys.argv[2] == 'id':
                 # main.py update id <id: int>
+                # main.py force-update id <id: int>
+                if sys.argv[1] == 'force-update':
+                    suppress_absence = False
+
+                else:
+                    suppress_absence = True
+
                 try:
                     id_for_update: int = int(sys.argv[3])
 
@@ -248,7 +257,7 @@ def main():
                     exit(1)
 
                 logger.info(f'Entering update specified squad: {id_for_update} ID')
-                update(squad_id=id_for_update)
+                update(squad_id=id_for_update, suppress_absence=suppress_absence)
                 exit(0)
 
             else:
