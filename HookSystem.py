@@ -22,7 +22,7 @@ def check_int(func: callable) -> callable:
 def _last_records(operation_id: int, limit: int) -> list[dict]:
     last_exception: Exception | None = None
 
-    for retry in range(0, 3):
+    for retry in range(0, 10):
         try:
             return Hook.get_db().execute(
                 HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
@@ -40,6 +40,9 @@ def _last_records(operation_id: int, limit: int) -> list[dict]:
             logger.opt(exception=True).warning(f'Exception in {threading.current_thread().name}, retry: {retry}')
             last_exception = e
             continue
+
+    with open('retries_list.txt', mode='a') as retries_file:
+        retries_file.write(f'{operation_id}\n')
 
     raise last_exception
 
