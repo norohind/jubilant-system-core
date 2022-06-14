@@ -22,7 +22,7 @@ def check_int(func: callable) -> callable:
 def _last_records(operation_id: int, limit: int) -> list[dict]:
     last_exception: Exception | None = None
 
-    for retry in range(0, 10):
+    for retry in range(0, 30):
         try:
             return Hook.get_db().execute(
                 HookUtils.SQL_REQUESTS.GET_HISTORICAL_INFO,
