@@ -314,3 +314,4 @@ begin
 end;
 
 create index if not exists idx_snh_operation_id_desc on squadrons_news_historical (operation_id desc);
+create index if not exists idx_shd_operation_id on squadrons_historical_data(operation_id);
