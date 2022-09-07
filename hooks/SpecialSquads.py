@@ -30,7 +30,7 @@ class DeleteSpecialSquad(Hook):
         if not is_special_squadron(last_record['squad_id']):
             return
 
-        message = f'Deleted SPECIAL squad `{last_record["name"]}` [last_record["tag"]]\nplatform: {last_record["platform"]}, members: {last_record["member_count"]}, ' \
+        message = f'Deleted SPECIAL squad `{last_record["name"]}` [{last_record["tag"]}]\nplatform: {last_record["platform"]}, members: {last_record["member_count"]}, ' \
                   f'created: {last_record["created"]}, owner: `{last_record["owner_name"]}`'
         HookUtils.notify_discord(message)
 
