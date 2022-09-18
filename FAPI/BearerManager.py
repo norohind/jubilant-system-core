@@ -42,4 +42,4 @@ class BearerManagerException(Exception):
         self.parent_exception = parent_exception
 
 
-bearer_manager = BearerManager(os.environ['DEMB_CAPI_AUTH'], 'https://capi.demb.design')
+bearer_manager = BearerManager(os.environ['DEMB_CAPI_AUTH'], 'https://capi.demb.uk')
