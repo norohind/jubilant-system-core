@@ -34,7 +34,7 @@ class BearerManager:
 
     def _request(self, _endpoint: Endpoints) -> requests.Response:
         endpoint = self.base_address + _endpoint.value
-        return self.session.get(url=endpoint, headers={'auth': self.demb_capi_auth})
+        return self.session.get(url=endpoint, headers={'auth': self.demb_capi_auth}, timeout=10)
 
 
 class BearerManagerException(Exception):

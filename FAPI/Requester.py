@@ -85,11 +85,16 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
                 method=method,
                 url=url,
                 headers={'Authorization': f'Bearer {bearer_manager.get_random_bearer()}'},
+                timeout=10,
                 **kwargs
             )
 
             logger.debug(f'Request complete, code {proxiedFapiRequest.status_code!r}, len '
                          f'{len(proxiedFapiRequest.content)}')
+
+        except requests.exceptions.Timeout as e:
+            logger.opt(exception=e).error(f'Exception during request {method} {url!r} {kwargs!r}')
+            continue
 
         except requests.exceptions.ConnectionError as e:
             logger.error(f'Proxy {proxy.url} is invalid: {str(e.__class__.__name__)}')
