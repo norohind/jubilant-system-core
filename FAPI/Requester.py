@@ -85,7 +85,7 @@ def request(url: str, method: str = 'get', **kwargs) -> requests.Response:
                 method=method,
                 url=url,
                 headers={'Authorization': f'Bearer {bearer_manager.get_random_bearer()}'},
-                timeout=10,
+                timeout=30,
                 **kwargs
             )
 
