@@ -53,6 +53,24 @@ def insert_info_news(news_dict: dict | None, info_dict: dict) -> int:
         operation_id = allocate_operation_id(info_dict['squad_id'])
         info_dict['operation_id'] = operation_id
 
+        # Vanguards update workaround
+        info_dict["online_count"] = 0
+        info_dict["pending_count"] = 0
+        info_dict["current_season_trade_score"] = 0
+        info_dict["previous_season_trade_score"] = 0
+        info_dict["current_season_combat_score"] = 0
+        info_dict["previous_season_combat_score"] = 0
+        info_dict["current_season_exploration_score"] = 0
+        info_dict["previous_season_exploration_score"] = 0
+        info_dict["current_season_cqc_score"] = 0
+        info_dict["previous_season_cqc_score"] = 0
+        info_dict["current_season_bgs_score"] = 0
+        info_dict["previous_season_bgs_score"] = 0
+        info_dict["current_season_powerplay_score"] = 0
+        info_dict["previous_season_powerplay_score"] = 0
+        info_dict["current_season_aegis_score"] = 0
+        info_dict["previous_season_aegis_score"] = 0
+
         db.execute(SQLRequests.insert_info, info_dict)
 
         if news_dict is not None:

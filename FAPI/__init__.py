@@ -22,7 +22,9 @@ def update_squad(squad_id: int, suppress_absence=False) -> None | int:
 
     else:
         # Then we got valid squad_info dict
-        news_info = Queries.get_squad_news(squad_id)
+        news_info = None  # Queries.get_squad_news(squad_id)
+        # since Vanguards update NEWS_ENDPOINT always returns 500 b'{"status":500,"message":"Internal Server Error","tag":"bbbdpzgnssvbp"}'
+
         operation_id = DB.insert_info_news(news_info, squad_info)
         hook_system.notify_inserted(operation_id)
 
