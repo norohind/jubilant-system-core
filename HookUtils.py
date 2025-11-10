@@ -25,7 +25,8 @@ def notify_discord(message: str) -> None:
     discord_request: requests.Response = requests.post(
         url=hookURL,
         data=content,
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        proxies={"https": "http://localhost:1080"}
     )
 
     try:
